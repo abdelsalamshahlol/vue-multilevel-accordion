@@ -1,6 +1,5 @@
 .DS_Store
 component/vue-multilevel-accordion/node_modules
-component/vue-multilevel-accordion/dist
 
 example/node_modules
 example/dist
