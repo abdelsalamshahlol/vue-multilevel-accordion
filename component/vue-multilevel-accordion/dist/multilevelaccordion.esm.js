@@ -42,15 +42,35 @@ var script = {
     return {
       panelStyle: "",
       interleaved: ((this.interleaveOffset % 2) + this.position) % 2 == 0,
-      expanded: false
+      expanded: false,
+      isLoading: false
     };
   },
   methods: {
     togglePanel: function togglePanel() {
-      if (!this.expanded) {
-        this.expand();
+      var this$1 = this;
+
+      var extraAction = this.tree.clickHandler;
+        var handleToggle = function () {
+            if (!this$1.expanded) {
+                this$1.expand();
+            } else {
+                this$1.shrink();
+            }
+        };
+      // console.log( typeof extraAction, !!extraAction && typeof extraAction === 'function' )
+      if (!!extraAction && typeof extraAction === 'function') {
+          this.isLoading = true;
+          extraAction()
+              .then(function (r) {
+                  console.log({r: r});
+                  handleToggle();
+              })
+              .finally(function () {
+                  this$1.isLoading = false;
+              });
       } else {
-        this.shrink();
+          handleToggle();
       }
     },
     expand: function expand() {
@@ -84,7 +104,7 @@ var script = {
       if (this.tree.children == undefined) { return true; }
       return this.tree.children.length == 0;
     }
-  }
+  },
 };
 
 function normalizeComponent(template, style, script, scopeId, isFunctionalTemplate, moduleIdentifier /* server only */, shadowMode, createInjector, createInjectorSSR, createInjectorShadow) {
@@ -236,15 +256,27 @@ var __vue_render__ = function() {
           }
         },
         [
-          _vm._t("default", null, {
-            tree: _vm.tree,
-            interleaved: _vm.interleaved,
-            expanded: _vm.expanded,
-            level: _vm.level,
-            leaf: _vm.leaf
-          })
-        ],
-        2
+          _c(
+            "div",
+            { staticClass: "header-wrap" },
+            [
+              _vm._t("default", null, {
+                tree: _vm.tree,
+                interleaved: _vm.interleaved,
+                expanded: _vm.expanded,
+                level: _vm.level,
+                leaf: _vm.leaf
+              }),
+              _vm._v(" "),
+              _vm.isLoading
+                ? _c("div", { staticClass: "spinner-container" }, [
+                    _vm._v("\n             spinner\n         ")
+                  ])
+                : _vm._e()
+            ],
+            2
+          )
+        ]
       ),
       _vm._v(" "),
       !_vm.leaf
@@ -318,11 +350,11 @@ __vue_render__._withStripped = true;
   /* style */
   var __vue_inject_styles__ = function (inject) {
     if (!inject) { return }
-    inject("data-v-77947cbc_0", { source: "\n.accordion[data-v-77947cbc] {\n  text-align: left;\n}\n.accordion-rtl[data-v-77947cbc] {\n  text-align: right;\n}\n.panel[data-v-77947cbc] {\n  max-height: 0;\n  overflow: hidden;\n}\n.panel-transition[data-v-77947cbc] {\n  transition: max-height 0.2s ease-out;\n}\n", map: {"version":3,"sources":["/home/abdelsalam/WebstormProjects/vue-multilevel-accordion/component/vue-multilevel-accordion/src/MultilevelAccordionChildren.vue"],"names":[],"mappings":";AAmJA;EACA,gBAAA;AACA;AAEA;EACA,iBAAA;AACA;AAEA;EACA,aAAA;EACA,gBAAA;AACA;AAEA;EACA,oCAAA;AACA","file":"MultilevelAccordionChildren.vue","sourcesContent":["<template>\n  <div class=\"accordion-children\">\n    <li>\n      <!-- Upper Tab -->\n      <div\n        :class=\"`${rtl ? 'accordion-rtl':'accordion'}`\"\n        @click=\"togglePanel()\"\n      >\n        <slot\n          :tree=\"tree\"\n          :interleaved=\"interleaved\"\n          :expanded=\"expanded\"\n          :level=\"level\"\n          :leaf=\"leaf\"\n        ></slot>\n      </div>\n\n      <!-- Expandible Elements -->\n      <div\n        v-if=\"!leaf\"\n        class=\"panel expandible panel-transition\"\n        :ref=\"`panel-${reference}`\"\n        :style=\"panelStyle\"\n      >\n        <ul :style=\"`margin-left: ${marginLeft}rem; margin-right: ${marginRight}rem;`\">\n          <multilevel-accordion-children\n            v-for=\"(child, index) in tree.children\"\n            :key=\"index\"\n            :tree=\"child\"\n            :reference=\"`${reference}-${index}`\"\n            :ref=\"`childs-${reference}`\"\n            :position=\"index\"\n            :interleaveOffset=\"interleaveOffset + position + 1\"\n            :level=\"level + 1\"\n            :marginLeft=\"marginLeft\"\n            :marginRight=\"marginRight\"\n            :rtl=\"rtl\"\n            @updateHeight=\"updateHeight\"\n          >\n            <template slot-scope=\"_\">\n              <slot\n                :tree=\"_.tree\"\n                :interleaved=\"_.interleaved\"\n                :expanded=\"_.expanded\"\n                :level=\"_.level\"\n                :leaf=\"_.leaf\"\n              ></slot>\n            </template>\n          </multilevel-accordion-children>\n        </ul>\n      </div>\n    </li>\n  </div>\n</template>\n\n<script>\nimport MultilevelAccordionChildren from \"./MultilevelAccordionChildren.vue\";\n\nexport default {\n  name: \"multilevel-accordion-children\",\n  props: {\n    tree: {\n      type: Object\n    },\n    reference: {\n      type: String,\n      required: true\n    },\n    interleaveOffset: {\n      type: Number,\n      required: true\n    },\n    position: {\n      type: Number,\n      required: true\n    },\n    level: {\n      type: Number,\n      required: true\n    },\n    marginLeft: {\n      type: Number,\n      default: 0\n    },\n    marginRight: {\n      type: Number,\n      default: 0\n    },\n    rtl: {\n      type: Boolean,\n      default: false\n    }\n  },\n  components: {\n    MultilevelAccordionChildren\n  },\n  data() {\n    return {\n      panelStyle: \"\",\n      interleaved: ((this.interleaveOffset % 2) + this.position) % 2 == 0,\n      expanded: false\n    };\n  },\n  methods: {\n    togglePanel() {\n      if (!this.expanded) {\n        this.expand();\n      } else {\n        this.shrink();\n      }\n    },\n    expand() {\n      if (this.leaf) return null;\n      if (!this.expanded) {\n        let el = this.$refs[`panel-${this.reference}`];\n        this.panelStyle = `max-height: ${el.scrollHeight}px;`;\n        this.expanded = true;\n        // Inform to the parent the new height so it can re calculate its scroll height\n        this.$emit(\"updateHeight\", el.scrollHeight);\n      }\n    },\n    shrink() {\n      if (this.leaf) return null;\n      this.panelStyle = \"max-height: 0px;\";\n      this.expanded = false;\n    },\n    updateHeight(childrenHeight) {\n      // Recalculate scroll height based on childrens height modification\n      if (this.expanded) {\n        let el = this.$refs[`panel-${this.reference}`];\n        this.panelStyle = `max-height: ${el.scrollHeight + childrenHeight}px;`;\n        this.$emit(\"updateHeight\", el.scrollHeight + childrenHeight);\n      }\n    }\n  },\n  computed: {\n    leaf() {\n      // Override by user\n      if (this.tree.leaf != undefined) return this.tree.leaf;\n      if (this.tree.children == undefined) return true;\n      return this.tree.children.length == 0;\n    }\n  }\n};\n</script>\n\n<style scoped>\n.accordion {\n  text-align: left;\n}\n\n.accordion-rtl {\n  text-align: right;\n}\n\n.panel {\n  max-height: 0;\n  overflow: hidden;\n}\n\n.panel-transition {\n  transition: max-height 0.2s ease-out;\n}\n</style>\n"]}, media: undefined });
+    inject("data-v-86cbcf20_0", { source: "\n.accordion[data-v-86cbcf20] {\n  text-align: left;\n}\n.accordion-rtl[data-v-86cbcf20] {\n  text-align: right;\n}\n.panel[data-v-86cbcf20] {\n  max-height: 0;\n  overflow: hidden;\n}\n.panel-transition[data-v-86cbcf20] {\n  transition: max-height 0.2s ease-out;\n}\n.header-wrap[data-v-86cbcf20] {\n        display: flex;\n        align-items: center;\n}\n.accordion-rtl .spinner-container[data-v-86cbcf20] {\n        margin-right: 5px\n}\n.accordion .spinner-container[data-v-86cbcf20] {\n    margin-left: 5px\n}\n", map: {"version":3,"sources":["/home/abdelsalam/WebstormProjects/vue-multilevel-accordion/component/vue-multilevel-accordion/src/MultilevelAccordionChildren.vue"],"names":[],"mappings":";AA0KA;EACA,gBAAA;AACA;AAEA;EACA,iBAAA;AACA;AAEA;EACA,aAAA;EACA,gBAAA;AACA;AAEA;EACA,oCAAA;AACA;AAEA;QACA,aAAA;QACA,mBAAA;AACA;AACA;QACA;AACA;AAEA;IACA;AACA","file":"MultilevelAccordionChildren.vue","sourcesContent":["<template>\n  <div class=\"accordion-children\">\n    <li>\n      <!-- Upper Tab -->\n      <div\n        :class=\"`${rtl ? 'accordion-rtl':'accordion'}`\"\n        @click=\"togglePanel()\"\n      >\n       <div class=\"header-wrap\">\n           <slot\n                   :tree=\"tree\"\n                   :interleaved=\"interleaved\"\n                   :expanded=\"expanded\"\n                   :level=\"level\"\n                   :leaf=\"leaf\"\n           ></slot>\n           <div class=\"spinner-container\" v-if=\"isLoading\">\n               spinner\n           </div>\n       </div>\n      </div>\n\n      <!-- Expandible Elements -->\n      <div\n        v-if=\"!leaf\"\n        class=\"panel expandible panel-transition\"\n        :ref=\"`panel-${reference}`\"\n        :style=\"panelStyle\"\n      >\n        <ul :style=\"`margin-left: ${marginLeft}rem; margin-right: ${marginRight}rem;`\">\n          <multilevel-accordion-children\n            v-for=\"(child, index) in tree.children\"\n            :key=\"index\"\n            :tree=\"child\"\n            :reference=\"`${reference}-${index}`\"\n            :ref=\"`childs-${reference}`\"\n            :position=\"index\"\n            :interleaveOffset=\"interleaveOffset + position + 1\"\n            :level=\"level + 1\"\n            :marginLeft=\"marginLeft\"\n            :marginRight=\"marginRight\"\n            :rtl=\"rtl\"\n            @updateHeight=\"updateHeight\"\n          >\n            <template slot-scope=\"_\">\n              <slot\n                :tree=\"_.tree\"\n                :interleaved=\"_.interleaved\"\n                :expanded=\"_.expanded\"\n                :level=\"_.level\"\n                :leaf=\"_.leaf\"\n              ></slot>\n            </template>\n          </multilevel-accordion-children>\n        </ul>\n      </div>\n    </li>\n  </div>\n</template>\n\n<script>\nimport MultilevelAccordionChildren from \"./MultilevelAccordionChildren.vue\";\n\nexport default {\n  name: \"multilevel-accordion-children\",\n  props: {\n    tree: {\n      type: Object\n    },\n    reference: {\n      type: String,\n      required: true\n    },\n    interleaveOffset: {\n      type: Number,\n      required: true\n    },\n    position: {\n      type: Number,\n      required: true\n    },\n    level: {\n      type: Number,\n      required: true\n    },\n    marginLeft: {\n      type: Number,\n      default: 0\n    },\n    marginRight: {\n      type: Number,\n      default: 0\n    },\n    rtl: {\n      type: Boolean,\n      default: false\n    }\n  },\n  components: {\n    MultilevelAccordionChildren\n  },\n  data() {\n    return {\n      panelStyle: \"\",\n      interleaved: ((this.interleaveOffset % 2) + this.position) % 2 == 0,\n      expanded: false,\n      isLoading: false\n    };\n  },\n  methods: {\n    togglePanel() {\n      const extraAction = this.tree.clickHandler\n        const handleToggle = () => {\n            if (!this.expanded) {\n                this.expand();\n            } else {\n                this.shrink();\n            }\n        }\n      // console.log( typeof extraAction, !!extraAction && typeof extraAction === 'function' )\n      if (!!extraAction && typeof extraAction === 'function') {\n          this.isLoading = true\n          extraAction()\n              .then((r) => {\n                  console.log({r})\n                  handleToggle()\n              })\n              .finally(() => {\n                  this.isLoading = false\n              })\n      } else {\n          handleToggle()\n      }\n    },\n    expand() {\n      if (this.leaf) return null;\n      if (!this.expanded) {\n        let el = this.$refs[`panel-${this.reference}`];\n        this.panelStyle = `max-height: ${el.scrollHeight}px;`;\n        this.expanded = true;\n        // Inform to the parent the new height so it can re calculate its scroll height\n        this.$emit(\"updateHeight\", el.scrollHeight);\n      }\n    },\n    shrink() {\n      if (this.leaf) return null;\n      this.panelStyle = \"max-height: 0px;\";\n      this.expanded = false;\n    },\n    updateHeight(childrenHeight) {\n      // Recalculate scroll height based on childrens height modification\n      if (this.expanded) {\n        let el = this.$refs[`panel-${this.reference}`];\n        this.panelStyle = `max-height: ${el.scrollHeight + childrenHeight}px;`;\n        this.$emit(\"updateHeight\", el.scrollHeight + childrenHeight);\n      }\n    }\n  },\n  computed: {\n    leaf() {\n      // Override by user\n      if (this.tree.leaf != undefined) return this.tree.leaf;\n      if (this.tree.children == undefined) return true;\n      return this.tree.children.length == 0;\n    }\n  },\n};\n</script>\n\n<style scoped>\n.accordion {\n  text-align: left;\n}\n\n.accordion-rtl {\n  text-align: right;\n}\n\n.panel {\n  max-height: 0;\n  overflow: hidden;\n}\n\n.panel-transition {\n  transition: max-height 0.2s ease-out;\n}\n\n    .header-wrap {\n        display: flex;\n        align-items: center;\n    }\n   .accordion-rtl .spinner-container {\n        margin-right: 5px\n    }\n\n.accordion .spinner-container {\n    margin-left: 5px\n}\n</style>\n"]}, media: undefined });
 
   };
   /* scoped */
-  var __vue_scope_id__ = "data-v-77947cbc";
+  var __vue_scope_id__ = "data-v-86cbcf20";
   /* module identifier */
   var __vue_module_identifier__ = undefined;
   /* functional template */
