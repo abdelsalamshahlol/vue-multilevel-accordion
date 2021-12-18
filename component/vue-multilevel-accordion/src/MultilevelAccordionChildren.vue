@@ -6,13 +6,18 @@
         :class="`${rtl ? 'accordion-rtl':'accordion'}`"
         @click="togglePanel()"
       >
-        <slot
-          :tree="tree"
-          :interleaved="interleaved"
-          :expanded="expanded"
-          :level="level"
-          :leaf="leaf"
-        ></slot>
+       <div class="header-wrap">
+           <slot
+                   :tree="tree"
+                   :interleaved="interleaved"
+                   :expanded="expanded"
+                   :level="level"
+                   :leaf="leaf"
+           ></slot>
+           <div class="spinner-container" v-if="isLoading">
+               spinner
+           </div>
+       </div>
       </div>
 
       <!-- Expandible Elements -->
@@ -98,15 +103,33 @@ export default {
     return {
       panelStyle: "",
       interleaved: ((this.interleaveOffset % 2) + this.position) % 2 == 0,
-      expanded: false
+      expanded: false,
+      isLoading: false
     };
   },
   methods: {
     togglePanel() {
-      if (!this.expanded) {
-        this.expand();
+      const extraAction = this.tree.clickHandler
+        const handleToggle = () => {
+            if (!this.expanded) {
+                this.expand();
+            } else {
+                this.shrink();
+            }
+        }
+      // console.log( typeof extraAction, !!extraAction && typeof extraAction === 'function' )
+      if (!!extraAction && typeof extraAction === 'function') {
+          this.isLoading = true
+          extraAction()
+              .then((r) => {
+                  console.log({r})
+                  handleToggle()
+              })
+              .finally(() => {
+                  this.isLoading = false
+              })
       } else {
-        this.shrink();
+          handleToggle()
       }
     },
     expand() {
@@ -140,7 +163,7 @@ export default {
       if (this.tree.children == undefined) return true;
       return this.tree.children.length == 0;
     }
-  }
+  },
 };
 </script>
 
@@ -160,5 +183,17 @@ export default {
 
 .panel-transition {
   transition: max-height 0.2s ease-out;
+}
+
+    .header-wrap {
+        display: flex;
+        align-items: center;
+    }
+   .accordion-rtl .spinner-container {
+        margin-right: 5px
+    }
+
+.accordion .spinner-container {
+    margin-left: 5px
 }
 </style>
