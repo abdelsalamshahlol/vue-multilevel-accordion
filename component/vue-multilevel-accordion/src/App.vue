@@ -1,11 +1,13 @@
 <template>
     <div dir="rtl">
-<!--        <pre dir="ltr">{{tree.children}}</pre>-->
         <multilevel-accordion :tree="tree" :margin-right="5" rtl>
             <template slot-scope="{ tree }">
                 <div>
                     <p>{{ tree.text }}</p>
                 </div>
+            </template>
+            <template slot="loader">
+                Please wait.....
             </template>
         </multilevel-accordion>
     </div>
@@ -52,9 +54,9 @@
                             "text": "أجهزة محمولة",
                             "expanded": true,
                             "children": [],
-                            clickHandler: ()=> new Promise((resolve)=> {
+                            clickHandler: (obj)=> new Promise((resolve)=> {
                                 setTimeout(()=> {
-                                    console.log('doing something....')
+                                    console.log('doing something....', {obj})
                                     Vue.set(this.tree.children[0],'children',[
                                         {
                                             "id": 2,

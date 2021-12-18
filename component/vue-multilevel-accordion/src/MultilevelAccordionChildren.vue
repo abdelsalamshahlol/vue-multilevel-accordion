@@ -14,8 +14,9 @@
                    :level="level"
                    :leaf="leaf"
            ></slot>
+
            <div class="spinner-container" v-if="isLoading">
-               spinner
+               <slot name="loader">Default</slot>
            </div>
        </div>
       </div>
@@ -117,17 +118,12 @@ export default {
                 this.shrink();
             }
         }
-      // console.log( typeof extraAction, !!extraAction && typeof extraAction === 'function' )
+
       if (!!extraAction && typeof extraAction === 'function') {
           this.isLoading = true
-          extraAction()
-              .then((r) => {
-                  console.log({r})
-                  handleToggle()
-              })
-              .finally(() => {
-                  this.isLoading = false
-              })
+          extraAction(this.tree)
+              .then(() => handleToggle())
+              .finally(() => this.isLoading = false)
       } else {
           handleToggle()
       }

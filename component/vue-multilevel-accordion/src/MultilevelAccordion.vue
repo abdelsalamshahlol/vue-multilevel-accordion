@@ -20,8 +20,11 @@
             :expanded="_.expanded"
             :level="_.level"
             :leaf="_.leaf"
-            @fire="fire"
           ></slot>
+        </template>
+
+        <template slot="loader">
+          <slot name="loader"></slot>
         </template>
       </multilevel-accordion-children>
     </ul>
